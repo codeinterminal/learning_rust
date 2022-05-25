@@ -18,14 +18,8 @@ fn main() {
     while read_n != 0 {
         let c = byte[0];
         if c == 0x0A { // CR
-            // TODO: convert buffer to line and push into all lines
-            // buffer -> s
-            let mut sbuf : Vec<u8> = Vec::new();
-            sbuf.extend_from_slice(&buffer);
-            let ss = sbuf.into_boxed_slice();
-            let s = std::str::from_utf8(&ss).expect("this is not a valid string");
-            all_lines.push(s.to_string());
-            buffer.clear();
+            all_lines.push(String::from_utf8(buffer).expect("invalid string"));
+            buffer = Vec::new();
         } else {
             buffer.push(byte[0]);
         }
