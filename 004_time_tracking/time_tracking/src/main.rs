@@ -17,17 +17,15 @@ struct Args {
         - to split entries there will be an empty line
 
 */
-/*
 #[derive(Debug)]
 struct Timespan {
-    start_utc_timestamp u64;
-    duration_in_secs    u64;
+    start_utc_timestamp : u64,
+    duration_in_secs    : u64,
 
-    task_name           String;
-    task_description    String;
-    tags                Vec<String>;
+    task_name           : String,
+    task_description    : String,
+    tags                : Vec<String>,
 }
-*/
 
 
 fn main() {
@@ -51,21 +49,29 @@ fn main() {
 
     let mut it = lines.into_iter();
 
-    let mut xx : Option<String>;
+    let mut xx : Option<Timespan>;
     loop {
         xx = read_timespan(&mut it);
         if xx.is_none() {
             break;
         }
-        println!("++++ {xx:?}");
+        let ts = xx.unwrap();
+        println!("++++ {ts:?}");
     }
 }
 
 
-fn read_timespan<'a, T: Iterator< Item=&'a str>>(line_it : &mut T) -> Option<String> {
+fn read_timespan<'a, T: Iterator< Item=&'a str>>(line_it : &mut T) -> Option<Timespan> {
+
     let opt = line_it.next();
     match opt {
-        Some(foo) => Some("bar ".to_owned() + foo),
+        Some(foo) => Some(Timespan{
+            start_utc_timestamp: 1654110340,
+            duration_in_secs: 60,
+            task_name: foo.to_string(),
+            task_description: "description".to_string(),
+            tags: vec!["t1".to_string(), "t2".to_string()],
+        }),
         None => None,
     }
 }
