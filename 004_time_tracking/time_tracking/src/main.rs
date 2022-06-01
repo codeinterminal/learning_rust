@@ -1,8 +1,7 @@
 use clap::Parser;
 use std::fs;
 use std::path;
-
-
+use std::io::Read;
 
 #[derive(Parser, Debug)]
 #[clap(author, version)]
@@ -16,6 +15,7 @@ struct Args {
         - each field is written in a line
         - new fields will be added at the end
         - to split entries there will be an empty line
+
 */
 /*
 #[derive(Debug)]
@@ -36,7 +36,9 @@ fn main() {
     let args = Args::parse();
     println!("Input file: {}", args.dbfile);
 
-    let fpath = path::Path::new(&args.dbfile.to_string());
+    let dbfile = args.dbfile.to_string();
+    let fpath = path::Path::new(&dbfile);
+
     // try to open tasks db file:
     let mut f = fs::File::open(fpath)
         .expect("cannot open tasks db file");
@@ -45,20 +47,25 @@ fn main() {
     f.read_to_string(&mut content)
         .expect("cannot read tasks content");
 
-    let mut lines : Vec<&str> = content.lines().collect();
+    let lines : Vec<&str> = content.lines().collect();
 
     let mut it = lines.into_iter();
-    let ts = read_timespan(&mut it);
 
+    let mut xx : Option<String>;
+    loop {
+        xx = read_timespan(&mut it);
+        if xx.is_none() {
+            break;
+        }
+        println!("++++ {xx:?}");
+    }
 }
 
 
-fn read_timespan(line_it: &mut dyn Iterator<Item=&str>) -> Option<String> {
+fn read_timespan<'a, T: Iterator< Item=&'a str>>(line_it : &mut T) -> Option<String> {
     let opt = line_it.next();
-    let mut foo = String::new();
-    if Some(foo) {
-        return Some("bar".to_string());
-    } else {
-        return None;
+    match opt {
+        Some(foo) => Some("bar ".to_owned() + foo),
+        None => None,
     }
 }
