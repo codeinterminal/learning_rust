@@ -49,6 +49,7 @@ fn main() {
 
     let mut it = lines.into_iter();
 
+    let mut tss : Vec<Timespan> = Vec::new();
     let mut xx : Option<Timespan>;
     loop {
         xx = read_timespan(&mut it);
@@ -56,22 +57,58 @@ fn main() {
             break;
         }
         let ts = xx.unwrap();
-        println!("++++ {ts:?}");
+        tss.push(ts);
     }
+    print_summary(tss);
 }
 
 
 fn read_timespan<'a, T: Iterator< Item=&'a str>>(line_it : &mut T) -> Option<Timespan> {
 
-    let opt = line_it.next();
-    match opt {
-        Some(foo) => Some(Timespan{
-            start_utc_timestamp: 1654110340,
-            duration_in_secs: 60,
-            task_name: foo.to_string(),
-            task_description: "description".to_string(),
-            tags: vec!["t1".to_string(), "t2".to_string()],
-        }),
-        None => None,
+    let mut tlines: Vec<String> = Vec::new();
+    // min 4 lines (timestamp, duration, tags, name, description)
+    for _ in 0..4 {
+        let ln = line_it.next();
+        match ln {
+            None => {
+                return None
+            },
+            Some(content) => {
+                if content.trim.length() == 0 {
+                    return None
+                }
+                tlines.push(content);
+            }
+        }
     }
+
+    // TODO: parse to u64 the two first lines
+
+    //
+    let desc : String = String::new();
+    let descL = line_it.next();
+    while !descL.is_none() && Some(descL).trim().length() > 0 {
+        desc.Append(Some() )
+    }
+}
+
+fn print_summary(timespans: Vec<Timespan>) {
+    let mut total : u64 = 0;
+    for ts in timespans {
+        total += ts.duration_in_secs;
+        print_task(&ts);
+    }
+
+    println!("---------------------------------------");
+    println!("total secs: {total}");
+}
+
+fn print_task(ts: &Timespan) {
+    println!("==[ {} ] @{} ==", ts.task_name, ts.start_utc_timestamp);
+    println!("{}", ts.task_description);
+    println!("------- (secs: {})", ts.duration_in_secs);
+    for tag in &ts.tags {
+        print!("#{tag} ");
+    }
+    println!("");
 }
