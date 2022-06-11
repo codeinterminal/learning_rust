@@ -1,4 +1,4 @@
-use std::io::{stdout};
+use std::io::{stdout, stdin, Read};
 use std::thread;
 
 use crossterm::{
@@ -44,16 +44,24 @@ fn main() {
     enter_screen();
 
     // TODO: launch this as a background thread
-    draw_thread();
+    // draw_thread();
+
+    process_input();
 
     leave_screen();
 }
 
-/*
 fn process_input() {
+    let mut s = stdin();
+    let mut reader = s.lock();
 
+    let mut buf : Vec<u8> = vec![0];
+    let mut r = reader.read(&mut buf).expect("gimme a byte");
+
+    stdout().execute(Print(format!("byte: {}   {}",
+        buf[0], r))).unwrap();
+    thread::sleep_ms(3000);
 }
-*/
 
 fn enter_screen() {
     stdout().execute(EnterAlternateScreen).expect("all ok");
@@ -68,6 +76,7 @@ fn leave_screen() {
     stdout().execute(LeaveAlternateScreen).expect("all ok");
 }
 
+/*
 fn draw_thread() {
     for i in 0..10 {
         draw_frame(i);
@@ -84,3 +93,4 @@ fn draw_frame(frame: u32) {
     }
     stdout().execute(Print("*")).unwrap();
 }
+*/
