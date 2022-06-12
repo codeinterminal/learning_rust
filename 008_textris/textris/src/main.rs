@@ -1,5 +1,6 @@
 use std::io::{stdout, stdin, Read};
 use std::thread;
+use std::sync::mpsc;
 
 use crossterm::{
     // execute,
@@ -40,27 +41,31 @@ fn main() {
     let (term_width, term_height) = size().expect("has size");
     println!("Screen size: {term_width} , {term_height}");
 
-    // ---
     enter_screen();
 
-    // TODO: launch this as a background thread
-    // draw_thread();
-
-    process_input();
-
+    let (mut tx, mut rx) = mpsc::channel();
+    thread::spawn(move || {
+        draw_thread(&mut rx);
+    });
+    process_input(&mut tx);
     leave_screen();
 }
 
-fn process_input() {
+fn process_input(tx: &mut mpsc::Sender<u8>) {
     let mut s = stdin();
     let mut reader = s.lock();
 
     let mut buf : Vec<u8> = vec![0];
-    let mut r = reader.read(&mut buf).expect("gimme a byte");
+    _ = reader.read(&mut buf).expect("gimme a byte");
 
-    stdout().execute(Print(format!("byte: {}   {}",
-        buf[0], r))).unwrap();
-    thread::sleep_ms(3000);
+    while buf[0] != 113 {
+        // stdout().execute(Print(format!("byte: {}   {} \n",
+        //    buf[0], r))).unwrap();
+        let r = reader.read(&mut buf).expect("gimme a byte");
+        if r > 0 {
+            tx.send(buf[0]);
+        }
+    }
 }
 
 fn enter_screen() {
@@ -76,11 +81,21 @@ fn leave_screen() {
     stdout().execute(LeaveAlternateScreen).expect("all ok");
 }
 
-/*
-fn draw_thread() {
-    for i in 0..10 {
+fn draw_thread(rx: &mut mpsc::Receiver<u8>) {
+    let mut i = 0;
+
+    let mut x: u16 = 30;
+    let mut y: u16 = 15;
+
+    loop {
         draw_frame(i);
-        thread::sleep_ms(1000);
+        if let Ok(c) = rx.try_recv() {
+            move_piece(c, &mut x, &mut y);
+        }
+        draw_piece(x, y);
+
+        thread::sleep_ms(16);
+        i = (i + 1) % 20;
     }
 }
 
@@ -93,4 +108,28 @@ fn draw_frame(frame: u32) {
     }
     stdout().execute(Print("*")).unwrap();
 }
-*/
+
+fn move_piece(b: u8, x: &mut u16, y: &mut u16) {
+    // move and display the piece
+    let up = 107;
+    let down = 106;
+    let right = 108;
+    let left = 104;
+
+    if b == up {
+        *y -= 1;
+    } else if b == down {
+        *y += 1;
+    } else if b == right {
+        *x += 1;
+    } else if b == left {
+        *x -= 1;
+    }
+}
+
+fn draw_piece(x: u16, y: u16) {
+    stdout().execute(cursor::MoveToRow(y)).expect("move it");
+    stdout().execute(cursor::MoveToColumn(x)).unwrap();
+
+    stdout().execute(Print("#")).unwrap();
+}
