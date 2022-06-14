@@ -1,6 +1,8 @@
 use std::io::{stdout, stdin, Read};
 use std::{thread, time};
+use std::fmt::{Display, Formatter, Error};
 use std::sync::mpsc;
+
 
 use crossterm::{
     // execute,
@@ -35,17 +37,84 @@ use crossterm::{
 //     mask: [u8],
 // }
 
+#[derive(Debug)]
+struct Screen {
+    width: u16,
+    height: u16,
+}
+
+#[derive(Debug)]
+struct Board {
+    width: u16,
+    height: u16,
+}
+
+struct PieceShape {
+    width: u16,
+    height: u16,
+    charmap: &'static str,
+}
+
+struct Piece {
+    shape_idx: usize,
+    rot_90: u32, // range allowed [0..3]
+    x: u16,
+    y: u16,
+}
+
+struct PieceSet {
+    shapes: Vec<PieceShape>,
+}
+
+impl Display for Board {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        f.write_str(&*format!("B: {}x{}", self.width, self.height));
+        Ok(())
+    }
+}
 
 // ? can we do a random over an enum ?
 fn main() {
     let (term_width, term_height) = size().expect("has size");
-    println!("Screen size: {term_width} , {term_height}");
+
+    let screen = Screen{
+        width: term_width,
+        height: term_height,
+    };
+
+    let board = Board {
+        width: 10,
+        height:20,
+    };
+
+    let piece_set = PieceSet {
+        shapes: vec![
+            PieceShape{
+                width: 2,
+                height: 2,
+                charmap: "****",
+            },
+            PieceShape {
+                width: 3,
+                height: 3,
+                charmap: "**  **",
+            },
+            PieceShape {
+                width: 3,
+                height: 3,
+                charmap: " ****  ",
+            },
+        ],
+    };
+
+
+    println!("Screen: {:?} , {}", screen, board);
 
     enter_screen();
 
     let (mut tx, mut rx) = mpsc::channel();
     thread::spawn(move || {
-        draw_thread(&mut rx);
+        draw_thread(&mut rx, &piece_set);
     });
     process_input(&mut tx);
     leave_screen();
@@ -76,11 +145,20 @@ fn leave_screen() {
     stdout().execute(LeaveAlternateScreen).expect("all ok");
 }
 
-fn draw_thread(rx: &mut mpsc::Receiver<u8>) {
+fn draw_thread(rx: &mut mpsc::Receiver<u8>,
+    piece_set: &PieceSet) {
+
     let mut i = 0;
 
     let mut x: u16 = 30;
     let mut y: u16 = 15;
+
+    let test_piece = Piece{
+        shape_idx: 1,
+        rot_90: 0,
+        x: 3,
+        y: 3,
+    };
 
     let sleep_ms = time::Duration::from_millis(16);
     loop {
@@ -88,7 +166,7 @@ fn draw_thread(rx: &mut mpsc::Receiver<u8>) {
         if let Ok(c) = rx.try_recv() {
             move_piece(c, &mut x, &mut y);
         }
-        draw_piece(x, y);
+        draw_piece(x, y, &test_piece, &piece_set);
         thread::sleep(sleep_ms);
         i = (i + 1) % 20;
     }
@@ -120,9 +198,11 @@ fn move_piece(b: u8, x: &mut u16, y: &mut u16) {
     }
 }
 
-fn draw_piece(x: u16, y: u16) {
+fn draw_piece(x: u16, y: u16, piece: &Piece, piece_set: &PieceSet) {
     stdout().execute(cursor::MoveToRow(y)).expect("move it");
     stdout().execute(cursor::MoveToColumn(x)).unwrap();
 
-    stdout().execute(Print("#")).unwrap();
+    let p : &PieceShape = &piece_set.shapes[piece.shape_idx];
+
+    stdout().execute(Print(p.charmap)).unwrap();
 }
