@@ -49,26 +49,87 @@ struct Board {
 //   *
 //   *
 //
+//  | 
+//  | 
+//  | 
+//  | 
+//
 //  | ####
 //  |    #
 //  | ####
 //  | ####
 //
+//
+//  Square:
+// -------------
+//  12
+//  34
+//
+// 41
+// 32
+//
+//  Stair left
+// ------------
+//  12
+//   34
+//
+//    1
+//   32
+//   4
+//
+//          -- double reflex
+//               21
+//              43
+//
+//              43
+//               21
+//
+//          -- double reflex
+//               34
+//              12
+//
+//              43
+//               21
+//
+//  Stair right
+// --------------
+//   12
+//  34
+//
+//   3
+//   41
+//    2
+//
 struct PieceShape {
     width: u16,
     height: u16,
     charmap: &'static str,
+    offset_x: i16,
+    offset_y: i16,
+}
+
+struct PieceDefinition {
+    // shapes: Vec<PieceShape>,
+    //
+    //
+    //
+    //
+    //
+    // TODO: check if we can use this
+    //
+    //
+    shapes: [PieceShape;4],
 }
 
 struct Piece {
+    definition_idx: usize,
     shape_idx: usize,
-    rot_90: u32, // range allowed [0..3]
     x: u16,
     y: u16,
 }
 
 struct PieceSet {
-    shapes: Vec<PieceShape>,
+    definitions: Vec<PieceDefinition>,
 }
 
 impl Display for Board {
@@ -93,22 +154,71 @@ fn main() {
     };
 
     let piece_set = PieceSet {
-        shapes: vec![
-            PieceShape{
-                width: 2,
-                height: 2,
-                charmap: "****",
+        definitions: vec![
+            PieceDefinition {
+                shapes: [
+                    PieceShape{
+                        width: 2,
+                        height: 2,
+                        charmap: "****",
+                        offset_x: 0,
+                        offset_y: 0,
+                    },
+                    PieceShape{
+                        width: 2,
+                        height: 2,
+                        charmap: "****",
+                        offset_x: 0,
+                        offset_y: 0,
+                    },
+                    PieceShape{
+                        width: 2,
+                        height: 2,
+                        charmap: "****",
+                        offset_x: 0,
+                        offset_y: 0,
+                    },
+                    PieceShape{
+                        width: 2,
+                        height: 2,
+                        charmap: "****",
+                        offset_x: 0,
+                        offset_y: 0,
+                    },
+                ],
             },
-            PieceShape {
-                width: 3,
-                height: 2,
-                charmap: "**  **",
-            },
-            PieceShape {
-                width: 3,
-                height: 2,
-                charmap: " ****  ",
-            },
+            PieceDefinition {
+                shapes: [
+                    PieceShape {
+                        width: 3,
+                        height: 2,
+                        charmap: "**  **",
+                        offset_x: -1,
+                        offset_y: 0,
+                    },
+                    PieceShape {
+                        width: 2,
+                        height: 3,
+                        charmap: " **** ",
+                        offset_x: 0,
+                        offset_y: -1,
+                    },
+                    PieceShape {
+                        width: 3,
+                        height: 2,
+                        charmap: "**  **",
+                        offset_x: -1,
+                        offset_y: 0,
+                    },
+                    PieceShape {
+                        width: 2,
+                        height: 3,
+                        charmap: " **** ",
+                        offset_x: 0,
+                        offset_y: -1,
+                    },
+                ]
+            }
         ],
     };
 
@@ -159,8 +269,8 @@ fn draw_thread(rx: &mut mpsc::Receiver<u8>,
     let mut y: u16 = 15;
 
     let test_piece = Piece{
-        shape_idx: 1,
-        rot_90: 0,
+        definition_idx: 1,
+        shape_idx: 0,
         x: 3,
         y: 3,
     };
@@ -171,7 +281,8 @@ fn draw_thread(rx: &mut mpsc::Receiver<u8>,
         if let Ok(c) = rx.try_recv() {
             move_piece(c, &mut x, &mut y);
         }
-        draw_piece(x, y, &test_piece, &piece_set);
+        // draw_piece(x, y, &test_piece, &piece_set);
+        draw_piece(4, 4, &test_piece, &piece_set);
         thread::sleep(sleep_ms);
         i = (i + 1) % 20;
     }
@@ -207,14 +318,17 @@ fn draw_piece(x: u16, y: u16, piece: &Piece, piece_set: &PieceSet) {
     stdout().execute(cursor::MoveToRow(y)).expect("move it");
     stdout().execute(cursor::MoveToColumn(x)).unwrap();
 
-    let p : &PieceShape = &piece_set.shapes[piece.shape_idx];
+    let p : &PieceShape = &piece_set.definitions[piece.definition_idx].shapes[piece.shape_idx];
+
+    let xx: u16 = (x as i16 + p.offset_x) as u16;
+    let yy: u16 = (y as i16 + p.offset_y) as u16;
     for i in 0..p.height {
         for j in 0..p.width {
             let idx : usize = (p.width * i + j).into();
             let v : &str = &p.charmap[idx..idx+1];
             if v != " " {
-                stdout().execute(cursor::MoveToRow(y + i)).unwrap();
-                stdout().execute(cursor::MoveToColumn(x + j)).unwrap();
+                stdout().execute(cursor::MoveToRow(yy + i)).unwrap();
+                stdout().execute(cursor::MoveToColumn(xx + j)).unwrap();
                 stdout().execute(Print(v)).unwrap();
             }
         }
