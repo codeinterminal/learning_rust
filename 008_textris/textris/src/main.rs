@@ -26,16 +26,9 @@ use crossterm::{
 // Example:
 //
 // width: 3, hei
-//   **.   .*
-//   .**   **
-//         *.
-//
-// #[Derive(debug)]
-// struct Piece {
-//     width: i32,
-//     height: i32,
-//     mask: [u8],
-// }
+//   **     *
+//    **   **
+//         *
 
 #[derive(Debug)]
 struct Screen {
@@ -49,6 +42,18 @@ struct Board {
     height: u16,
 }
 
+//
+//
+//   *          ****
+//  +*++
+//   *
+//   *
+//
+//  | ####
+//  |    #
+//  | ####
+//  | ####
+//
 struct PieceShape {
     width: u16,
     height: u16,
@@ -96,12 +101,12 @@ fn main() {
             },
             PieceShape {
                 width: 3,
-                height: 3,
+                height: 2,
                 charmap: "**  **",
             },
             PieceShape {
                 width: 3,
-                height: 3,
+                height: 2,
                 charmap: " ****  ",
             },
         ],
@@ -203,6 +208,19 @@ fn draw_piece(x: u16, y: u16, piece: &Piece, piece_set: &PieceSet) {
     stdout().execute(cursor::MoveToColumn(x)).unwrap();
 
     let p : &PieceShape = &piece_set.shapes[piece.shape_idx];
+    for i in 0..p.height {
+        for j in 0..p.width {
+            let idx : usize = (p.width * i + j).into();
+            let v : &str = &p.charmap[idx..idx+1];
+            if v != " " {
+                stdout().execute(cursor::MoveToRow(y + i)).unwrap();
+                stdout().execute(cursor::MoveToColumn(x + j)).unwrap();
+                stdout().execute(Print(v)).unwrap();
+            }
+        }
+    }
 
-    stdout().execute(Print(p.charmap)).unwrap();
+    // stdout().execute(Print(p.charmap)).unwrap();
 }
+
+
