@@ -3,6 +3,8 @@ use std::{thread, time};
 use std::fmt::{Display, Formatter, Error};
 use std::sync::mpsc;
 
+use tetris::{TetrisGame};
+
 
 use crossterm::{
     // execute,
@@ -23,110 +25,6 @@ use crossterm::{
     cursor,
 };
 
-// Example:
-//
-// width: 3, hei
-//   **     *
-//    **   **
-//         *
-
-#[derive(Debug)]
-struct Screen {
-    width: u16,
-    height: u16,
-}
-
-#[derive(Debug)]
-struct Board {
-    width: u16,
-    height: u16,
-}
-
-//
-//
-//   *          ****
-//  +*++
-//   *
-//   *
-//
-//  | 
-//  | 
-//  | 
-//  | 
-//
-//  | ####
-//  |    #
-//  | ####
-//  | ####
-//
-//
-//  Square:
-// -------------
-//  12
-//  34
-//
-// 41
-// 32
-//
-//  Stair left
-// ------------
-//  12
-//   34
-//
-//    1
-//   32
-//   4
-//
-//          -- double reflex
-//               21
-//              43
-//
-//              43
-//               21
-//
-//          -- double reflex
-//               34
-//              12
-//
-//              43
-//               21
-//
-//  Stair right
-// --------------
-//   12
-//  34
-//
-//   3
-//   41
-//    2
-//
-struct PieceShape {
-    width: u16,
-    height: u16,
-    charmap: &'static str,
-    offset_x: i16,
-    offset_y: i16,
-}
-
-struct PieceDefinition {
-    // shapes: Vec<PieceShape>,
-    //
-    //
-    //
-    //
-    //
-    // TODO: check if we can use this
-    //
-    //
-    shapes: [PieceShape;4],
-}
-
-struct Piece {
-    definition_idx: usize,
-    shape_idx: usize,
-    x: u16,
-    y: u16,
-}
 
 struct PieceSet {
     definitions: Vec<PieceDefinition>,
@@ -141,90 +39,15 @@ impl Display for Board {
 
 // ? can we do a random over an enum ?
 fn main() {
-    let (term_width, term_height) = size().expect("has size");
 
-    let screen = Screen{
-        width: term_width,
-        height: term_height,
-    };
-
-    let board = Board {
-        width: 10,
-        height:20,
-    };
-
-    let piece_set = PieceSet {
-        definitions: vec![
-            PieceDefinition {
-                shapes: [
-                    PieceShape{
-                        width: 2,
-                        height: 2,
-                        charmap: "****",
-                        offset_x: 0,
-                        offset_y: 0,
-                    },
-                    PieceShape{
-                        width: 2,
-                        height: 2,
-                        charmap: "****",
-                        offset_x: 0,
-                        offset_y: 0,
-                    },
-                    PieceShape{
-                        width: 2,
-                        height: 2,
-                        charmap: "****",
-                        offset_x: 0,
-                        offset_y: 0,
-                    },
-                    PieceShape{
-                        width: 2,
-                        height: 2,
-                        charmap: "****",
-                        offset_x: 0,
-                        offset_y: 0,
-                    },
-                ],
-            },
-            PieceDefinition {
-                shapes: [
-                    PieceShape {
-                        width: 3,
-                        height: 2,
-                        charmap: "**  **",
-                        offset_x: -1,
-                        offset_y: 0,
-                    },
-                    PieceShape {
-                        width: 2,
-                        height: 3,
-                        charmap: " **** ",
-                        offset_x: 0,
-                        offset_y: -1,
-                    },
-                    PieceShape {
-                        width: 3,
-                        height: 2,
-                        charmap: "**  **",
-                        offset_x: -1,
-                        offset_y: 0,
-                    },
-                    PieceShape {
-                        width: 2,
-                        height: 3,
-                        charmap: " **** ",
-                        offset_x: 0,
-                        offset_y: -1,
-                    },
-                ]
-            }
-        ],
-    };
+    let tetris_game = TetrisGame::new();
+    let tetris_render = StdTetrisRender::new();
+    let tetris_input = StdTetrisInput::new();
 
 
     println!("Screen: {:?} , {}", screen, board);
 
+    tetris_render.init();
     enter_screen();
 
     let (mut tx, mut rx) = mpsc::channel();
@@ -232,14 +55,14 @@ fn main() {
         draw_thread(&mut rx, &piece_set);
     });
     process_input(&mut tx);
-    leave_screen();
+
+    tetris_render.shutdown();
 }
 
-fn process_input(tx: &mut mpsc::Sender<u8>) {
-    let s = stdin();
-    let mut reader = s.lock();
-    let mut buf : Vec<u8> = vec![0];
-    while buf[0] != 113 {
+fn process_input(tx: &mut mpsc::Sender<TetrisMove>,
+                 input: impl &TetrisInput) {
+    let nextInput = tetris::TetrisMove;
+    while !buf[0] != 113 {
         let r = reader.read(&mut buf).expect("gimme a byte");
         if r > 0 {
             _ = tx.send(buf[0]);
@@ -247,20 +70,7 @@ fn process_input(tx: &mut mpsc::Sender<u8>) {
     }
 }
 
-fn enter_screen() {
-    stdout().execute(EnterAlternateScreen).expect("all ok");
-    stdout().execute(ResetColor).expect("all ok");
-    stdout().execute(cursor::Hide).unwrap();
-    enable_raw_mode().unwrap();
-}
-
-fn leave_screen() {
-    disable_raw_mode().unwrap();
-    stdout().execute(cursor::Show).unwrap();
-    stdout().execute(LeaveAlternateScreen).expect("all ok");
-}
-
-fn draw_thread(rx: &mut mpsc::Receiver<u8>,
+fn draw_thread(rx: &mut mpsc::Receiver<TetrisMove>,
     piece_set: &PieceSet) {
 
     let mut i = 0;
@@ -333,8 +143,6 @@ fn draw_piece(x: u16, y: u16, piece: &Piece, piece_set: &PieceSet) {
             }
         }
     }
-
-    // stdout().execute(Print(p.charmap)).unwrap();
 }
 
 
