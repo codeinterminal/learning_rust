@@ -183,12 +183,38 @@ impl TetrisGame {
                     }
                 ],
             }
+            active_piece: Piece{
+                definition_idx: 1,
+                shape_idx: 0,
+                x: 3,
+                y: 3,
+            },
         }
     }
 
     pub fn move_piece(self: &mut Self, movement: TetrisMove) {
+        // TODO: use the enum definitions
         match movement {
-
+            if b == up {
+                *y -= 1;
+            } else if b == down {
+                *y += 1;
+            } else if b == right {
+                *x += 1;
+            } else if b == left {
+                *x -= 1;
+            }
         }
+    }
+
+    pub fn update(self: &mut Self, elapsed_ms: i64) {
+        // when initial time is 0, is the first time 
+        // we all update
+        //
+        // TODO: animate piece
+    }
+
+    pub fn input(self: &mut Self, input: TetrisMove ) {
+
     }
 }
