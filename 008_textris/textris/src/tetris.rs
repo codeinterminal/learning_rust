@@ -1,4 +1,4 @@
-pub mod tetris;
+use std::fmt::{Display, Formatter, Error};
 
 // TetrisMove represents a movement for the game
 pub enum TetrisMove {
@@ -7,21 +7,28 @@ pub enum TetrisMove {
     Fall,
     RotCW,
     RotCCW,
-    Quit
+    Quit,
 }
 
 pub trait TetrisInput {
-    fn Input() -> TetrisMove;
+    fn Input(&mut self) -> TetrisMove;
 }
 
 pub trait TetrisRender {
-    fn Render(game: &TetrisGame);
+    fn Render(&mut self, game: &TetrisGame);
 }
 
 #[derive(Debug)]
 pub struct Board {
     width: u16,
     height: u16,
+}
+
+impl Display for Board {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        f.write_str(&*format!("B: {}x{}", self.width, self.height));
+        Ok(())
+    }
 }
 
 //
@@ -31,10 +38,10 @@ pub struct Board {
 //   *
 //   *
 //
-//  | 
-//  | 
-//  | 
-//  | 
+//  |
+//  |
+//  |
+//  |
 //
 //  | ####
 //  |    #
@@ -83,29 +90,36 @@ pub struct Board {
 //    2
 //
 pub struct PieceShape {
-    width: u16,
-    height: u16,
-    charmap: &'static str,
-    offset_x: i16,
-    offset_y: i16,
+    pub width: u16,
+    pub height: u16,
+    pub charmap: &'static str,
+    pub offset_x: i16,
+    pub offset_y: i16,
 }
 
-struct PieceDefinition {
-    shapes: [PieceShape;4],
+pub struct PieceDefinition {
+    pub shapes: [PieceShape;4],
 }
 
-struct Piece {
-    definition_idx: usize,
-    shape_idx: usize,
-    x: u16,
-    y: u16,
+pub struct Piece {
+    pub definition_idx: usize,
+    pub shape_idx: usize,
+    pub x: u16,
+    pub y: u16,
 }
 
-struct TetrisGame {
-    board:      TetrisBoard,
-    piece_set:  PieceSet,
+pub struct PieceSet {
+    pub definitions: Vec<PieceDefinition>,
+}
 
-    active_piece: mut Piece,
+pub struct TetrisGame {
+    pub board:      Board,
+    pub piece_set:  PieceSet,
+
+    pub active_piece: Piece,
+    pub last_updated: i64,
+
+    pub active_piece_down_at: i64,
 }
 
 impl TetrisGame {
@@ -182,7 +196,7 @@ impl TetrisGame {
                         ]
                     }
                 ],
-            }
+            },
             active_piece: Piece{
                 definition_idx: 1,
                 shape_idx: 0,
@@ -193,25 +207,31 @@ impl TetrisGame {
     }
 
     pub fn move_piece(self: &mut Self, movement: TetrisMove) {
-        // TODO: use the enum definitions
         match movement {
-            if b == up {
-                *y -= 1;
-            } else if b == down {
-                *y += 1;
-            } else if b == right {
-                *x += 1;
-            } else if b == left {
-                *x -= 1;
-            }
+            TetrisMove::Fall => {
+                self.active_piece.y += 1;
+            },
+            TetrisMove::Right => {
+                self.active_piece.x += 1;
+            },
+            TetrisMove::Left => {
+                self.active_piece.x -= 1;
+            },
+            _ => {}
         }
     }
 
     pub fn update(self: &mut Self, elapsed_ms: i64) {
-        // when initial time is 0, is the first time 
+        // when initial time is 0, is the first time
         // we all update
-        //
-        // TODO: animate piece
+        let update_every_x_ms = 1000;
+        let mut dt = elapsed_ms - self.active_piece_down_at;
+        while dt > update_every_x_ms {
+            self.active_piece.y += 1;
+            self.active_piece_down_at += update_every_x_ms;
+            dt -= update_every_x_ms;
+        }
+        self.last_updated = elapsed_ms;
     }
 
     pub fn input(self: &mut Self, input: TetrisMove ) {

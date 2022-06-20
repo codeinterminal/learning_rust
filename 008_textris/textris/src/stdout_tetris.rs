@@ -1,6 +1,31 @@
-use tetris::{TetrisRender};
+use crate::tetris::{
+    TetrisRender,
+    Piece,
+    PieceSet,
+    PieceShape,
+    TetrisGame,
+    Board,
+};
+use std::io::{stdout};
 
-pub mod stdout_tetris;
+use crossterm::{
+    // execute,
+    ExecutableCommand,
+    style::{
+        ResetColor,
+        Print,
+    },
+    terminal::{
+        size,
+        enable_raw_mode,
+        disable_raw_mode,
+        Clear,
+        ClearType,
+        EnterAlternateScreen,
+        LeaveAlternateScreen,
+    },
+    cursor,
+};
 
 #[derive(Debug)]
 struct Screen {
@@ -67,5 +92,8 @@ impl StdTetrisRender {
 }
 
 impl TetrisRender for StdTetrisRender {
-
+    fn Render(self: &mut Self, game: &TetrisGame) {
+        // I do nothing yet
+        self.draw_frame(1);
+    }
 }

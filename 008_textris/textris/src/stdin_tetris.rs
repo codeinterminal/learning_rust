@@ -1,18 +1,15 @@
 use std;
+// use std::io::{stdin, Read};
 
-use tetris::{
+use crate::tetris::{
     TetrisInput,
     TetrisMove,
-}
-
-pub mod stdin_tetris;
-
-
+};
 
 pub struct StdTetrisInput {
     stdin: std::io::Stdin,
-    reader: &std::io::Read,
-    buf: [u8:1],
+    reader: &std::io::StdinLock,
+    buf: [u8,1],
 }
 
 impl StdTetrisInput {
@@ -22,7 +19,7 @@ impl StdTetrisInput {
         return StdTetrisInput {
             stdin: s,
             reader: r,
-    let mut buf : Vec<u8> = vec![0];
+            // buf : Vec<u8> = vec![0];
         }
     }
     // TODO: implement Drop to unlock stdin ?
@@ -35,11 +32,11 @@ impl TetrisInput for StdTetrisInput {
     let left = 104;
     let quit = 113;
 
-    pub fn input(self: &Self) -> Option<TetrisMove> {
-        let r = reader.read(&mut buf).expect("gimme a byte");
+    pub fn input(self: &mut Self) -> Option<TetrisMove> {
+        let r = self.reader.read(&mut buf).expect("gimme a byte");
         if r > 0 {
             match buf[0] {
-                quit => Some(Quit), 
+                quit => Some(Quit),
                 right => Some(Right),
                 left => Some(Left),
                 down => Some(Fall),
