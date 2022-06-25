@@ -28,7 +28,9 @@ fn main() {
     let (mut tx, mut rx) = mpsc::channel();
     let gt = thread::spawn(move || {
         game_thread(&mut rx, &mut tetris_game, &mut tetris_render);
-        tetris_render.shutdown()
+        println!("call shutdown!");
+        tetris_render.shutdown();
+        println!("shutdown called!");
     });
 
     process_input(&mut tx, &mut tetris_input);
@@ -71,8 +73,9 @@ fn game_thread(rx: &mut mpsc::Receiver<TetrisMove>,
     renderer.render(tetris_game);
     thread::sleep(sleep_ms);
 
+
     let mut exit = false;
-    while exit {
+    while !exit {
         if let Ok(action) = rx.try_recv() {
             if matches!(action, TetrisMove::Quit) {
                 exit = true;
@@ -81,6 +84,7 @@ fn game_thread(rx: &mut mpsc::Receiver<TetrisMove>,
         }
         let elapsed_ms = time::Instant::now()
             .duration_since(initial_time).as_millis();
+
         let cur_time : i64 = elapsed_ms.try_into().unwrap();
         tetris_game.update(cur_time);
         renderer.render(tetris_game);
