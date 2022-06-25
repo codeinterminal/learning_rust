@@ -3,17 +3,18 @@ use std::{thread, time};
 use std::fmt::{Display, Formatter, Error};
 use std::sync::mpsc;
 
-use tetris::{
+use textris::tetris::{
     TetrisGame,
     TetrisInput,
     TetrisRender,
+    TetrisMove,
 };
 
-use stdout_tetris::{
+use textris::stdout_tetris::{
     StdTetrisRender,
 };
 
-use stdin_tetris::{
+use textris::stdin_tetris::{
     StdTetrisInput,
 };
 
@@ -26,10 +27,11 @@ fn main() {
 
     let (mut tx, mut rx) = mpsc::channel();
     thread::spawn(move || {
-        game_thread(&mut rx, tetris_game, tetris_render);
+        game_thread(&mut rx, &mut tetris_game, &mut tetris_render);
+        tetris_render.shutdown()
     });
 
-    process_input(&mut tx);
+    process_input(&mut tx, &mut tetris_input);
 
     // tetris_render.shutdown();
 
@@ -40,39 +42,41 @@ fn main() {
 }
 
 fn process_input(tx: &mut mpsc::Sender<TetrisMove>,
-                 input: &(impl TetrisInput)) {
-    let nextInput = tetris::TetrisMove;
-    while nextInput != tetris::TetrisMove::Quit {
-        if let(tm) = input.input() {
-            _ = tx.send(tm);
-            nextInput = tm;
-        }
+                 input: &mut impl TetrisInput) {
+    let nextInput = TetrisMove::Nothing;
+    while nextInput != TetrisMove::Quit {
+        nextInput = input.input();
+        _ = tx.send(nextInput);
     }
 }
 
 fn game_thread(rx: &mut mpsc::Receiver<TetrisMove>,
-    tetris_game: &mut tetris::TetrisGame,
-    renderer: &mut tetris::TetrisRender
+    tetris_game: &mut TetrisGame,
+    renderer: &mut dyn TetrisRender
     ) {
 
     let mut i = 0;
 
     // TODO: get the time
-    let initial_time = time::Time();
-    let mut cur_time = initial_time;
+    let initial_time = time::Instant::now();
+
     let sleep_ms = time::Duration::from_millis(16);
 
-    let mut action : Option<tetris::TetrisMove> = Option(None)
-    while action != Some(Quit) {
-        if let Ok(c) = rx.try_recv() {
-            tetris_game.Input(c);
-            action = Some(c);
-        }
-        tetris_game.Update(cur_time - initial_time);
-        tetris_game.Render();
-        thread::sleep(sleep_ms);
-        cur_time = time.Time();
-    }
+    // first render without any input
+    tetris_game.update(0);
+    renderer.render(tetris_game);
+    thread::sleep(sleep_ms);
 
-    tetris_render.shutdown();
+    let mut action = TetrisMove::Nothing;
+    while action != TetrisMove::Quit {
+        if let Ok(action) = rx.try_recv() {
+            tetris_game.input(action);
+        }
+        let elapsed_ms = time::Instant::now()
+            .duration_since(initial_time).as_millis();
+        let cur_time : i64 = elapsed_ms.try_into().unwrap();
+        tetris_game.update(cur_time);
+        renderer.render(tetris_game);
+        thread::sleep(sleep_ms);
+    }
 }

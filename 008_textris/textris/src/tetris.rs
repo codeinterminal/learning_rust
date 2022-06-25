@@ -8,14 +8,15 @@ pub enum TetrisMove {
     RotCW,
     RotCCW,
     Quit,
+    Nothing,
 }
 
 pub trait TetrisInput {
-    fn Input(&mut self) -> TetrisMove;
+    fn input(&mut self) -> TetrisMove;
 }
 
 pub trait TetrisRender {
-    fn Render(&mut self, game: &TetrisGame);
+    fn render(&mut self, game: &TetrisGame);
 }
 
 #[derive(Debug)]
@@ -123,7 +124,7 @@ pub struct TetrisGame {
 }
 
 impl TetrisGame {
-    pub const fn new() -> TetrisGame {
+    pub fn new() -> TetrisGame {
         return TetrisGame {
             board: Board {
                 width: 10,
@@ -203,6 +204,8 @@ impl TetrisGame {
                 x: 3,
                 y: 3,
             },
+            last_updated: 0,
+            active_piece_down_at: 0,
         }
     }
 

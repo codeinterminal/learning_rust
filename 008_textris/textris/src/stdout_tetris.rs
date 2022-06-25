@@ -33,12 +33,12 @@ struct Screen {
     height: u16,
 }
 
-struct StdTetrisRender {
+pub struct StdTetrisRender {
     screen: Screen,
 }
 
 impl StdTetrisRender {
-    pub const fn new() -> StdTetrisRender {
+    pub fn new() -> StdTetrisRender {
         let (term_width, term_height) = size().expect("has size");
         StdTetrisRender {
             screen: Screen{
@@ -48,28 +48,28 @@ impl StdTetrisRender {
         }
     }
 
-    pub fn init() {
+    pub fn init(&mut self) {
         stdout().execute(EnterAlternateScreen).expect("all ok");
         stdout().execute(ResetColor).expect("all ok");
         stdout().execute(cursor::Hide).unwrap();
         enable_raw_mode().unwrap();
     }
 
-    pub fn shutdown() {
+    pub fn shutdown(&mut self) {
         disable_raw_mode().unwrap();
         stdout().execute(cursor::Show).unwrap();
         stdout().execute(LeaveAlternateScreen).expect("all ok");
     }
 
-    fn draw_frame(frame: u32) {
+    fn draw_frame(&mut self, frame: u32) {
         let col : u16 = frame.try_into().unwrap();
         stdout().execute(Clear(ClearType::All)).unwrap();
         stdout().execute(cursor::MoveToRow(1)).expect("move it");
-        stdout().execute( cursor::MoveToColumn(1 + col)).unwrap();
+        stdout().execute(cursor::MoveToColumn(1 + col)).unwrap();
         stdout().execute(Print("*")).unwrap();
     }
 
-    fn draw_piece(x: u16, y: u16, piece: &Piece, piece_set: &PieceSet) {
+    fn draw_piece(&mut self, x: u16, y: u16, piece: &Piece, piece_set: &PieceSet) {
         stdout().execute(cursor::MoveToRow(y)).expect("move it");
         stdout().execute(cursor::MoveToColumn(x)).unwrap();
 
@@ -92,7 +92,7 @@ impl StdTetrisRender {
 }
 
 impl TetrisRender for StdTetrisRender {
-    fn Render(self: &mut Self, game: &TetrisGame) {
+    fn render(self: &mut Self, game: &TetrisGame) {
         // I do nothing yet
         self.draw_frame(1);
     }

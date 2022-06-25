@@ -1,5 +1,5 @@
 use std;
-// use std::io::{stdin, Read};
+use std::io::{stdin, Read};
 
 use crate::tetris::{
     TetrisInput,
@@ -8,42 +8,43 @@ use crate::tetris::{
 
 pub struct StdTetrisInput {
     stdin: std::io::Stdin,
-    reader: &std::io::StdinLock,
-    buf: [u8,1],
+    buf: [u8;1],
 }
 
 impl StdTetrisInput {
-    pub const fn new() -> StdTetrisInput {
+    pub fn new() -> StdTetrisInput {
         let s = stdin();
-        let r = s.lock();
         return StdTetrisInput {
             stdin: s,
-            reader: r,
-            // buf : Vec<u8> = vec![0];
+            buf: [0],
         }
     }
     // TODO: implement Drop to unlock stdin ?
 }
 
 impl TetrisInput for StdTetrisInput {
-    // let up = 107;
-    let down = 106;
-    let right = 108;
-    let left = 104;
-    let quit = 113;
+    fn input(self: &mut Self) -> TetrisMove {
+        const QUIT : u8 = 113;
+        const RIGHT : u8 = 108;
+        const LEFT : u8 = 104;
+        const DOWN : u8 = 106;
+        const ROTCW : u8 = 'f' as u8;
+        const ROTCCW : u8 = 'd' as u8;
 
-    pub fn input(self: &mut Self) -> Option<TetrisMove> {
-        let r = self.reader.read(&mut buf).expect("gimme a byte");
+        let mut reader = self.stdin.lock();
+        let r = reader.read(&mut self.buf).expect("gimme a byte");
         if r > 0 {
-            match buf[0] {
-                quit => Some(Quit),
-                right => Some(Right),
-                left => Some(Left),
-                down => Some(Fall),
-                'f' => Some(RotCW),
-                'd' => Some(RotCCW),
-                _ => None,
+            match self.buf[0] {
+                QUIT => TetrisMove::Quit,
+                RIGHT => TetrisMove::Right,
+                LEFT => TetrisMove::Left,
+                DOWN => TetrisMove::Fall,
+                ROTCW => TetrisMove::RotCW,
+                ROTCCW => TetrisMove::RotCCW,
+                _ => TetrisMove::Nothing,
             }
+        } else {
+            TetrisMove::Nothing
         }
     }
 }
