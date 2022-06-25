@@ -19,19 +19,20 @@ use textris::stdin_tetris::{
 };
 
 fn main() {
-    let tetris_game = TetrisGame::new();
-    let tetris_render = StdTetrisRender::new();
-    let tetris_input = StdTetrisInput::new();
+    let mut tetris_game = TetrisGame::new();
+    let mut tetris_render = StdTetrisRender::new();
+    let mut tetris_input = StdTetrisInput::new();
 
     tetris_render.init();
 
     let (mut tx, mut rx) = mpsc::channel();
-    thread::spawn(move || {
+    let gt = thread::spawn(move || {
         game_thread(&mut rx, &mut tetris_game, &mut tetris_render);
         tetris_render.shutdown()
     });
 
     process_input(&mut tx, &mut tetris_input);
+    gt.join().unwrap();
 
     // tetris_render.shutdown();
 
@@ -43,10 +44,13 @@ fn main() {
 
 fn process_input(tx: &mut mpsc::Sender<TetrisMove>,
                  input: &mut impl TetrisInput) {
-    let nextInput = TetrisMove::Nothing;
-    while nextInput != TetrisMove::Quit {
-        nextInput = input.input();
-        _ = tx.send(nextInput);
+    let mut exit = false;
+    while !exit {
+        let c = input.input();
+        if matches!(c, TetrisMove::Quit) {
+            exit = true;
+        }
+        _ = tx.send(c);
     }
 }
 
@@ -67,9 +71,12 @@ fn game_thread(rx: &mut mpsc::Receiver<TetrisMove>,
     renderer.render(tetris_game);
     thread::sleep(sleep_ms);
 
-    let mut action = TetrisMove::Nothing;
-    while action != TetrisMove::Quit {
+    let mut exit = false;
+    while exit {
         if let Ok(action) = rx.try_recv() {
+            if matches!(action, TetrisMove::Quit) {
+                exit = true;
+            }
             tetris_game.input(action);
         }
         let elapsed_ms = time::Instant::now()
