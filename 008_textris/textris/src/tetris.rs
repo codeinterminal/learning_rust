@@ -137,6 +137,38 @@ impl TetrisGame {
                                 offset_y: -1,
                             },
                         ]
+                    },
+                    PieceDefinition {
+                        shapes: [
+                            PieceShape {
+                                width: 3,
+                                height: 2,
+                                charmap: " **** ",
+                                offset_x: -1,
+                                offset_y: 0,
+                            },
+                            PieceShape {
+                                width: 2,
+                                height: 3,
+                                charmap: "* ** *",
+                                offset_x: 0,
+                                offset_y: -1,
+                            },
+                            PieceShape {
+                                width: 3,
+                                height: 2,
+                                charmap: " **** ",
+                                offset_x: -1,
+                                offset_y: 0,
+                            },
+                            PieceShape {
+                                width: 2,
+                                height: 3,
+                                charmap: "* ** *",
+                                offset_x: 0,
+                                offset_y: -1,
+                            },
+                        ]
                     }
                 ],
             },
@@ -186,7 +218,7 @@ impl TetrisGame {
                 if self.active_piece.shape_idx > 0 {
                     self.active_piece.shape_idx -= 1;
                 } else {
-                    self.active_piece.shape_idx = 0;
+                    self.active_piece.shape_idx = 3;
                 }
             },
             _ => {}

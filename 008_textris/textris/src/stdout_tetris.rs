@@ -15,6 +15,9 @@ use crossterm::{
     style::{
         ResetColor,
         Print,
+        SetColors,
+        Colors,
+        Color,
     },
     terminal::{
         size,
@@ -73,6 +76,18 @@ impl StdTetrisRender {
     }
 
     fn draw_piece(&mut self, out: &mut Stdout, piece: &Piece, piece_set: &PieceSet) {
+        let colors = vec![
+            Color::Red,
+            Color::Yellow,
+            Color::Green,
+            Color::Blue,
+            Color::Magenta,
+            Color::Cyan,
+        ];
+
+        out.queue(SetColors(Colors::new(
+                Color::Red, colors[piece.definition_idx])));
+
         let ox : u16 = 4;
         let oy : u16 = 4;
 
@@ -93,31 +108,36 @@ impl StdTetrisRender {
                 if v != " " {
                     out.queue(cursor::MoveToRow(yy + i)).unwrap();
                     out.queue(cursor::MoveToColumn(xx + j)).unwrap();
-                    out.queue(Print(v)).unwrap();
+                    out.queue(Print(" ")).unwrap();
                 }
             }
         }
+
+        out.queue(ResetColor).unwrap();
     }
 
     fn draw_board(self: &mut Self, out: &mut Stdout, game: &TetrisGame) {
         let xx : u16 = 4;
         let yy : u16 = 4;
 
+        out.queue(SetColors(Colors::new(
+                Color::Red, Color::DarkGrey)));
         for y in 0..game.board.height {
             out.queue(cursor::MoveToRow(yy+y)).unwrap();
 
             out.queue(cursor::MoveToColumn(xx)).unwrap();
-            out.queue(Print("#")).unwrap();
+            out.queue(Print(" ")).unwrap();
             out.queue(cursor::MoveToColumn(
                     xx+2+game.board.width)).unwrap();
-            out.queue(Print("#")).unwrap();
+            out.queue(Print(" ")).unwrap();
         }
         out.queue(cursor::MoveToRow(
                 yy+game.board.height)).unwrap();
         out.queue(cursor::MoveToColumn(xx)).unwrap();
         for x in 0..game.board.width+3 {
-            out.queue(Print("#")).unwrap();
+            out.queue(Print(" ")).unwrap();
         }
+        out.queue(ResetColor).unwrap();
     }
 }
 

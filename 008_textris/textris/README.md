@@ -1,3 +1,11 @@
+# TODO:
+
+- give different probabilities to the pieces to show
+
+
+- make it one against another, with network support (and
+    NAT punch through or something like that :) )
+
 
 # How to handle rotations
 
