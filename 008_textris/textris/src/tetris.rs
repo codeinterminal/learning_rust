@@ -169,11 +169,139 @@ impl TetrisGame {
                                 offset_y: -1,
                             },
                         ]
+                    },
+                    PieceDefinition {
+                        shapes: [
+                            PieceShape {
+                                width: 4,
+                                height: 1,
+                                charmap: "****",
+                                offset_x: -1,
+                                offset_y: 0,
+                            },
+                            PieceShape {
+                                width: 1,
+                                height: 4,
+                                charmap: "****",
+                                offset_x: 0,
+                                offset_y: -1,
+                            },
+                            PieceShape {
+                                width: 4,
+                                height: 1,
+                                charmap: "****",
+                                offset_x: -1,
+                                offset_y: 0,
+                            },
+                            PieceShape {
+                                width: 1,
+                                height: 4,
+                                charmap: "****",
+                                offset_x: 0,
+                                offset_y: -1,
+                            },
+                        ]
+                    },
+                    PieceDefinition {
+                        shapes: [
+                            PieceShape {
+                                width: 3,
+                                height: 2,
+                                charmap: "*** * ",
+                                offset_x: 0,
+                                offset_y: 0,
+                            },
+                            PieceShape {
+                                width: 2,
+                                height: 3,
+                                charmap: " *** *",
+                                offset_x: 0,
+                                offset_y: -1,
+                            },
+                            PieceShape {
+                                width: 3,
+                                height: 2,
+                                charmap: " * ***",
+                                offset_x: 0,
+                                offset_y: -1,
+                            },
+                            PieceShape {
+                                width: 2,
+                                height: 3,
+                                charmap: "* *** ",
+                                offset_x: 0,
+                                offset_y: -1,
+                            },
+                        ]
+                    },
+                    PieceDefinition {
+                        shapes: [
+                            PieceShape {
+                                width: 3,
+                                height: 2,
+                                charmap: "*  ***",
+                                offset_x: 0,
+                                offset_y: 0,
+                            },
+                            PieceShape {
+                                width: 2,
+                                height: 3,
+                                charmap: "*** * ",
+                                offset_x: 0,
+                                offset_y: -1,
+                            },
+                            PieceShape {
+                                width: 3,
+                                height: 2,
+                                charmap: "***  *",
+                                offset_x: 0,
+                                offset_y: 0,
+                            },
+                            PieceShape {
+                                width: 2,
+                                height: 3,
+                                charmap: " * ***",
+                                offset_x: 0,
+                                offset_y: -1,
+                            },
+                        ]
+                    },
+                    PieceDefinition {
+                        shapes: [
+                            PieceShape {
+                                width: 3,
+                                height: 2,
+                                charmap: "  ****",
+                                offset_x: 0,
+                                offset_y: 0,
+                            },
+                            PieceShape {
+                                width: 2,
+                                height: 3,
+                                charmap: "* * **",
+                                offset_x: 0,
+                                offset_y: -1,
+                            },
+                            PieceShape {
+                                width: 3,
+                                height: 2,
+                                charmap: "****  ",
+                                offset_x: 0,
+                                offset_y: 0,
+                            },
+                            PieceShape {
+                                width: 2,
+                                height: 3,
+                                charmap: "** * *",
+                                offset_x: 0,
+                                offset_y: -1,
+                            },
+                        ]
                     }
                 ],
             },
             active_piece: Piece{
-                definition_idx: 1,
+                definition_idx: 6,
                 shape_idx: 0,
                 x: 3,
                 y: 3,

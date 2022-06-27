@@ -83,6 +83,7 @@ impl StdTetrisRender {
             Color::Blue,
             Color::Magenta,
             Color::Cyan,
+            Color::White,
         ];
 
         out.queue(SetColors(Colors::new(
