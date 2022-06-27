@@ -21,8 +21,8 @@ pub trait TetrisRender {
 
 #[derive(Debug)]
 pub struct Board {
-    width: u16,
-    height: u16,
+    pub width: u16,
+    pub height: u16,
 }
 
 impl Display for Board {
@@ -32,64 +32,6 @@ impl Display for Board {
     }
 }
 
-//
-//
-//   *          ****
-//  +*++
-//   *
-//   *
-//
-//  |
-//  |
-//  |
-//  |
-//
-//  | ####
-//  |    #
-//  | ####
-//  | ####
-//
-//
-//  Square:
-// -------------
-//  12
-//  34
-//
-// 41
-// 32
-//
-//  Stair left
-// ------------
-//  12
-//   34
-//
-//    1
-//   32
-//   4
-//
-//          -- double reflex
-//               21
-//              43
-//
-//              43
-//               21
-//
-//          -- double reflex
-//               34
-//              12
-//
-//              43
-//               21
-//
-//  Stair right
-// --------------
-//   12
-//  34
-//
-//   3
-//   41
-//    2
-//
 pub struct PieceShape {
     pub width: u16,
     pub height: u16,

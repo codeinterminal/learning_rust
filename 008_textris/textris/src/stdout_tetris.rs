@@ -6,11 +6,12 @@ use crate::tetris::{
     TetrisGame,
     Board,
 };
-use std::io::{stdout};
+use std::io::{stdout, Stdout, Write};
 
 use crossterm::{
     // execute,
     ExecutableCommand,
+    QueueableCommand,
     style::{
         ResetColor,
         Print,
@@ -61,17 +62,25 @@ impl StdTetrisRender {
         stdout().execute(LeaveAlternateScreen).expect("all ok");
     }
 
-    fn draw_frame(&mut self, frame: u32) {
-        let col : u16 = frame.try_into().unwrap();
-        stdout().execute(Clear(ClearType::All)).unwrap();
-        stdout().execute(cursor::MoveToRow(1)).expect("move it");
-        stdout().execute(cursor::MoveToColumn(1 + col)).unwrap();
-        stdout().execute(Print("*")).unwrap();
+    fn draw_frame(&mut self, game: &TetrisGame) {
+        let mut out = stdout();
+        out.queue(Clear(ClearType::All)).unwrap();
+
+        self.draw_board(&mut out, game);
+        self.draw_piece(&mut out, &game.active_piece, &game.piece_set);
+
+        out.flush();
     }
 
-    fn draw_piece(&mut self, x: u16, y: u16, piece: &Piece, piece_set: &PieceSet) {
-        stdout().execute(cursor::MoveToRow(y)).expect("move it");
-        stdout().execute(cursor::MoveToColumn(x)).unwrap();
+    fn draw_piece(&mut self, out: &mut Stdout, piece: &Piece, piece_set: &PieceSet) {
+        let ox : u16 = 4;
+        let oy : u16 = 4;
+
+        let x = piece.x + ox;
+        let y = piece.y + oy;
+
+        out.queue(cursor::MoveToRow(y)).unwrap();
+        out.queue(cursor::MoveToColumn(x)).unwrap();
 
         let p : &PieceShape = &piece_set.definitions[piece.definition_idx].shapes[piece.shape_idx];
 
@@ -82,18 +91,38 @@ impl StdTetrisRender {
                 let idx : usize = (p.width * i + j).into();
                 let v : &str = &p.charmap[idx..idx+1];
                 if v != " " {
-                    stdout().execute(cursor::MoveToRow(yy + i)).unwrap();
-                    stdout().execute(cursor::MoveToColumn(xx + j)).unwrap();
-                    stdout().execute(Print(v)).unwrap();
+                    out.queue(cursor::MoveToRow(yy + i)).unwrap();
+                    out.queue(cursor::MoveToColumn(xx + j)).unwrap();
+                    out.queue(Print(v)).unwrap();
                 }
             }
+        }
+    }
+
+    fn draw_board(self: &mut Self, out: &mut Stdout, game: &TetrisGame) {
+        let xx : u16 = 4;
+        let yy : u16 = 4;
+
+        for y in 0..game.board.height {
+            out.queue(cursor::MoveToRow(yy+y)).unwrap();
+
+            out.queue(cursor::MoveToColumn(xx)).unwrap();
+            out.queue(Print("#")).unwrap();
+            out.queue(cursor::MoveToColumn(
+                    xx+2+game.board.width)).unwrap();
+            out.queue(Print("#")).unwrap();
+        }
+        out.queue(cursor::MoveToRow(
+                yy+game.board.height)).unwrap();
+        out.queue(cursor::MoveToColumn(xx)).unwrap();
+        for x in 0..game.board.width+3 {
+            out.queue(Print("#")).unwrap();
         }
     }
 }
 
 impl TetrisRender for StdTetrisRender {
     fn render(self: &mut Self, game: &TetrisGame) {
-        // I do nothing yet
-        self.draw_frame(1);
+        self.draw_frame(game);
     }
 }
