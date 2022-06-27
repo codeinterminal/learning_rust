@@ -151,21 +151,6 @@ impl TetrisGame {
         }
     }
 
-    pub fn move_piece(self: &mut Self, movement: TetrisMove) {
-        match movement {
-            TetrisMove::Fall => {
-                self.active_piece.y += 1;
-            },
-            TetrisMove::Right => {
-                self.active_piece.x += 1;
-            },
-            TetrisMove::Left => {
-                self.active_piece.x -= 1;
-            },
-            _ => {}
-        }
-    }
-
     pub fn update(self: &mut Self, elapsed_ms: i64) {
         // when initial time is 0, is the first time
         // we all update
@@ -180,6 +165,31 @@ impl TetrisGame {
     }
 
     pub fn input(self: &mut Self, input: TetrisMove ) {
-
+        match input {
+            TetrisMove::Fall => {
+                self.active_piece.y += 1;
+            },
+            TetrisMove::Right => {
+                self.active_piece.x += 1;
+            },
+            TetrisMove::Left => {
+                self.active_piece.x -= 1;
+            },
+            TetrisMove::RotCW => {
+                if self.active_piece.shape_idx < 3 {
+                    self.active_piece.shape_idx += 1;
+                } else {
+                    self.active_piece.shape_idx = 0;
+                }
+            },
+            TetrisMove::RotCCW => {
+                if self.active_piece.shape_idx > 0 {
+                    self.active_piece.shape_idx -= 1;
+                } else {
+                    self.active_piece.shape_idx = 0;
+                }
+            },
+            _ => {}
+        }
     }
 }
