@@ -71,6 +71,8 @@ impl StdTetrisRender {
 
         self.draw_board(&mut out, game);
         self.draw_piece(&mut out, &game.active_piece, &game.piece_set);
+        self.draw_next_piece(&mut out, &game.next_piece,
+                             &game.piece_set);
 
         out.flush();
     }
@@ -90,6 +92,48 @@ impl StdTetrisRender {
                 Color::Red, colors[piece.definition_idx])));
 
         let ox : u16 = 4;
+        let oy : u16 = 4;
+
+        let x = piece.x + ox;
+        let y = piece.y + oy;
+
+        out.queue(cursor::MoveToRow(y)).unwrap();
+        out.queue(cursor::MoveToColumn(x)).unwrap();
+
+        let p : &PieceShape = &piece_set.definitions[piece.definition_idx].shapes[piece.shape_idx];
+
+        let xx: u16 = (x as i16 + p.offset_x) as u16;
+        let yy: u16 = (y as i16 + p.offset_y) as u16;
+        for i in 0..p.height {
+            for j in 0..p.width {
+                let idx : usize = (p.width * i + j).into();
+                let v : &str = &p.charmap[idx..idx+1];
+                if v != " " {
+                    out.queue(cursor::MoveToRow(yy + i)).unwrap();
+                    out.queue(cursor::MoveToColumn(xx + j)).unwrap();
+                    out.queue(Print(" ")).unwrap();
+                }
+            }
+        }
+
+        out.queue(ResetColor).unwrap();
+    }
+
+    fn draw_next_piece(&mut self, out: &mut Stdout, piece: &Piece, piece_set: &PieceSet) {
+        let colors = vec![
+            Color::Red,
+            Color::Yellow,
+            Color::Green,
+            Color::Blue,
+            Color::Magenta,
+            Color::Cyan,
+            Color::White,
+        ];
+
+        out.queue(SetColors(Colors::new(
+                Color::Red, colors[piece.definition_idx])));
+
+        let ox : u16 = 20;
         let oy : u16 = 4;
 
         let x = piece.x + ox;

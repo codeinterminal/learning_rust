@@ -62,6 +62,8 @@ pub struct TetrisGame {
     pub piece_set:  PieceSet,
 
     pub active_piece: Piece,
+    pub next_piece: Piece,
+
     pub last_updated: i64,
 
     pub active_piece_down_at: i64,
@@ -310,12 +312,19 @@ impl TetrisGame {
                 x: 3,
                 y: 3,
             },
+            next_piece: Piece{
+                definition_idx: 6,
+                shape_idx: 0,
+                x: 1,
+                y: 1,
+            },
             last_updated: 0,
             active_piece_down_at: 0,
             rnd: SmallRng::from_entropy(),
         };
 
         tg.active_piece.definition_idx = tg.rnd.gen_range(0..7);
+        tg.next_piece.definition_idx = tg.rnd.gen_range(0..7);
 
         return tg;
     }
