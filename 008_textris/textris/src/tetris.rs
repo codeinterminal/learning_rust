@@ -1,4 +1,6 @@
 use std::fmt::{Display, Formatter, Error};
+use rand::prelude::*;
+use rand::rngs::SmallRng;
 
 // TetrisMove represents a movement for the game
 pub enum TetrisMove {
@@ -63,11 +65,13 @@ pub struct TetrisGame {
     pub last_updated: i64,
 
     pub active_piece_down_at: i64,
+
+    rnd : SmallRng,
 }
 
 impl TetrisGame {
     pub fn new() -> TetrisGame {
-        return TetrisGame {
+        let mut tg = TetrisGame {
             board: Board {
                 width: 10,
                 height:20,
@@ -308,7 +312,12 @@ impl TetrisGame {
             },
             last_updated: 0,
             active_piece_down_at: 0,
-        }
+            rnd: SmallRng::from_entropy(),
+        };
+
+        tg.active_piece.definition_idx = tg.rnd.gen_range(0..7);
+
+        return tg;
     }
 
     pub fn update(self: &mut Self, elapsed_ms: i64) {
