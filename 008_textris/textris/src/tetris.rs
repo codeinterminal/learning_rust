@@ -370,16 +370,18 @@ impl TetrisGame {
             for j in 0..p.width {
                 let idx : usize = (p.width * i + j).into();
                 let v : &str = &p.charmap[idx..idx+1];
+                let px = xx + j as i16;
+                let py = yy + i as i16;
                 if v != " " {
                     // check with board limits:
-                    if xx < 0 {
+                    if px < 0 {
                         return true;
                     }
-                    if xx >= self.board.width as i16 {
+                    if px >= self.board.width as i16 {
                         return true;
                     }
 
-                    if yy >= self.board.height as i16 {
+                    if py >= self.board.height as i16 {
                         return true;
                     }
                     // TODO: check debrise collision
