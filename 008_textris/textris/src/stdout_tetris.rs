@@ -91,7 +91,8 @@ impl StdTetrisRender {
         out.queue(SetColors(Colors::new(
                 Color::Red, colors[piece.definition_idx])));
 
-        let ox : u16 = 4;
+        // TODO: put the draw origin in some field in the struct
+        let ox : u16 = 4 + 1;
         let oy : u16 = 4;
 
         let x = piece.x + ox;
@@ -173,13 +174,13 @@ impl StdTetrisRender {
             out.queue(cursor::MoveToColumn(xx)).unwrap();
             out.queue(Print(" ")).unwrap();
             out.queue(cursor::MoveToColumn(
-                    xx+2+game.board.width)).unwrap();
+                    xx+1+game.board.width)).unwrap();
             out.queue(Print(" ")).unwrap();
         }
         out.queue(cursor::MoveToRow(
                 yy+game.board.height)).unwrap();
         out.queue(cursor::MoveToColumn(xx)).unwrap();
-        for x in 0..game.board.width+3 {
+        for x in 0..game.board.width+2 {
             out.queue(Print(" ")).unwrap();
         }
         out.queue(ResetColor).unwrap();
