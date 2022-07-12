@@ -25,6 +25,8 @@ pub trait TetrisRender {
 pub struct Board {
     pub width: u16,
     pub height: u16,
+
+    pub debris: Vec<usize>,
 }
 
 impl Display for Board {
@@ -71,12 +73,15 @@ pub struct TetrisGame {
     rnd : SmallRng,
 }
 
+const NO_DEBRIS: usize = 100;
+
 impl TetrisGame {
     pub fn new() -> TetrisGame {
         let mut tg = TetrisGame {
             board: Board {
                 width: 10,
                 height:20,
+                debris: vec![NO_DEBRIS; 10*20],
             },
             piece_set: PieceSet {
                 definitions: vec![
@@ -334,24 +339,72 @@ impl TetrisGame {
         // we all update
         let update_every_x_ms = 1000;
         let mut dt = elapsed_ms - self.active_piece_down_at;
+
+        // TODO: update_every_x_ms should be named something
+        // related to the drop speed (or drop delay)
         while dt > update_every_x_ms {
-            self.active_piece.y += 1;
-            self.active_piece_down_at += update_every_x_ms;
+            if self.will_collide(0, 1) {
+                // TODO: check the debris to delete
+            } else {
+                self.active_piece.y += 1;
+                self.active_piece_down_at += update_every_x_ms;
+            }
             dt -= update_every_x_ms;
         }
         self.last_updated = elapsed_ms;
     }
 
+    fn will_collide(self: &mut Self, xoff: i16, yoff: i16) -> bool {
+        let mut x = (self.active_piece.x as i16) + xoff;
+        let mut y = (self.active_piece.y as i16) + yoff;
+
+        let pc = &self.active_piece;
+        let p : &PieceShape = &self.piece_set
+            .definitions[pc.definition_idx]
+            .shapes[pc.shape_idx];
+
+        let xx = x + p.offset_x;
+        let yy = y + p.offset_y;
+
+        for i in 0..p.height {
+            for j in 0..p.width {
+                let idx : usize = (p.width * i + j).into();
+                let v : &str = &p.charmap[idx..idx+1];
+                if v != " " {
+                    // check with board limits:
+                    if xx < 0 {
+                        return true;
+                    }
+                    if xx >= self.board.width as i16 {
+                        return true;
+                    }
+
+                    if yy >= self.board.height as i16 {
+                        return true;
+                    }
+                    // TODO: check debrise collision
+                }
+            }
+        }
+        return false
+    }
+
     pub fn input(self: &mut Self, input: TetrisMove ) {
         match input {
             TetrisMove::Fall => {
-                self.active_piece.y += 1;
+                if !self.will_collide(0, 1) {
+                    self.active_piece.y += 1;
+                }
             },
             TetrisMove::Right => {
-                self.active_piece.x += 1;
+                if !self.will_collide(1, 0) {
+                    self.active_piece.x += 1;
+                }
             },
             TetrisMove::Left => {
-                self.active_piece.x -= 1;
+                if !self.will_collide(-1, 0) {
+                    self.active_piece.x -= 1;
+                }
             },
             TetrisMove::RotCW => {
                 if self.active_piece.shape_idx < 3 {
