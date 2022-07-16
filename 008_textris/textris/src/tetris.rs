@@ -74,7 +74,7 @@ pub struct TetrisGame {
     rnd : SmallRng,
 }
 
-const NO_DEBRIS: usize = 100;
+pub const NO_DEBRIS: usize = 100;
 
 impl TetrisGame {
     pub fn new() -> TetrisGame {
@@ -345,6 +345,10 @@ impl TetrisGame {
         // related to the drop speed (or drop delay)
         while dt > update_every_x_ms {
             if self.will_collide(0, 1) {
+                // leave the debris in the board
+                let b = &mut self.board;
+                let idx : usize = b.width as usize * 2 + 1;
+                b.debris[idx] = self.active_piece.definition_idx;
                 // TODO: check the debris to delete
                 self.active_piece = self.next_piece;
                 self.active_piece.x = 5;

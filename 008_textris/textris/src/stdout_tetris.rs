@@ -5,6 +5,7 @@ use crate::tetris::{
     PieceShape,
     TetrisGame,
     Board,
+    NO_DEBRIS,
 };
 use std::io::{stdout, Stdout, Write};
 
@@ -182,6 +183,31 @@ impl StdTetrisRender {
         out.queue(cursor::MoveToColumn(xx)).unwrap();
         for x in 0..game.board.width+2 {
             out.queue(Print(" ")).unwrap();
+        }
+
+        // draw the debris
+        let colors = vec![
+            Color::Red,
+            Color::Yellow,
+            Color::Green,
+            Color::Blue,
+            Color::Magenta,
+            Color::Cyan,
+            Color::White,
+        ];
+        for dy in 0..game.board.height {
+            for dx in 0..game.board.width {
+                let idx = (dy * game.board.width + dx) as usize;
+                let def_idx = game.board.debris[idx];
+                if def_idx != NO_DEBRIS  {
+                    out.queue(cursor::MoveToRow(
+                            yy+dy)).unwrap();
+                    out.queue(cursor::MoveToColumn(xx+dx)).unwrap();
+                    out.queue(SetColors(
+                        Colors::new(Color::Red, colors[def_idx])));
+                    out.queue(Print(" ")).unwrap();
+                }
+            }
         }
         out.queue(ResetColor).unwrap();
     }
