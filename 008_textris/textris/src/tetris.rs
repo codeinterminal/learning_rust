@@ -416,7 +416,11 @@ impl TetrisGame {
                     if py >= self.board.height as i16 {
                         return true;
                     }
-                    // TODO: check debrise collision
+                    // check debris collision
+                    let didx = (py * self.board.width as i16 + px) as usize;
+                    if self.board.debris[didx] != NO_DEBRIS {
+                        return true;
+                    }
                 }
             }
         }
