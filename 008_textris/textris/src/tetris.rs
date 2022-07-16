@@ -347,8 +347,25 @@ impl TetrisGame {
             if self.will_collide(0, 1) {
                 // leave the debris in the board
                 let b = &mut self.board;
-                let idx : usize = b.width as usize * 2 + 1;
-                b.debris[idx] = self.active_piece.definition_idx;
+
+                let p : &PieceShape = &self.piece_set.definitions[
+                    self.active_piece.definition_idx].shapes[
+                    self.active_piece.shape_idx];
+
+                for i in 0..p.height {
+                    for j in 0..p.width {
+                        let cidx : usize = (p.width * i + j).into();
+                        let v : &str = &p.charmap[cidx..cidx+1];
+                        if v != " " {
+                            let idx = b.width as i16 *
+                                (i as i16 + self.active_piece.y as i16 + p.offset_y)
+                                + (j as i16 + self.active_piece.x as i16 + p.offset_x);
+
+                            b.debris[idx as usize] = self.active_piece.definition_idx;
+                        }
+                    }
+                }
+
                 // TODO: check the debris to delete
                 self.active_piece = self.next_piece;
                 self.active_piece.x = 5;

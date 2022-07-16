@@ -202,7 +202,7 @@ impl StdTetrisRender {
                 if def_idx != NO_DEBRIS  {
                     out.queue(cursor::MoveToRow(
                             yy+dy)).unwrap();
-                    out.queue(cursor::MoveToColumn(xx+dx)).unwrap();
+                    out.queue(cursor::MoveToColumn(xx+dx+1)).unwrap();
                     out.queue(SetColors(
                         Colors::new(Color::Red, colors[def_idx])));
                     out.queue(Print(" ")).unwrap();
