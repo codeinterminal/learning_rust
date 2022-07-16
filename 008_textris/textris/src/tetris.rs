@@ -48,6 +48,7 @@ pub struct PieceDefinition {
     pub shapes: [PieceShape;4],
 }
 
+#[derive(Clone, Copy)]
 pub struct Piece {
     pub definition_idx: usize,
     pub shape_idx: usize,
@@ -345,6 +346,16 @@ impl TetrisGame {
         while dt > update_every_x_ms {
             if self.will_collide(0, 1) {
                 // TODO: check the debris to delete
+                self.active_piece = self.next_piece;
+                self.active_piece.x = 5;
+                self.active_piece.y = 3;
+
+                self.next_piece = Piece {
+                    definition_idx: self.rnd.gen_range(0..7),
+                    shape_idx: 0,
+                    x: 1,
+                    y: 1,
+                }
             } else {
                 self.active_piece.y += 1;
                 self.active_piece_down_at += update_every_x_ms;
