@@ -31,9 +31,9 @@ impl Screen {
         let width = board_width + MIN_WIDTH_MARGIN;
         let height = board_height + MIN_HEIGHT_MARGIN;
 
-        let w_max_zoom = term_width % (width);
-        let h_max_zoom = term_height % (height);
-        let zoom = w_max_zoom;
+        let w_max_zoom = term_width / (width);
+        let h_max_zoom = term_height / (height);
+        let mut zoom = w_max_zoom;
         if zoom > h_max_zoom {
             zoom = h_max_zoom
         }
@@ -55,85 +55,127 @@ impl Screen {
         }
     }
 
-    pub fn prepare_commands(&self, game: &TetrisGame) -> Vec<Box<dyn Command>> {
+    fn stride(&self, len: usize) -> String {
+        let mut s = String::with_capacity(len);
+        for n in 0..len {
+            s.push(' ');
+        }
+        s
+    }
+
+    fn colorline(&self, out: &mut Stdout, length: usize, color_idx: usize) {
+        if length == 0 {
+            return;
+        }
+        let palette = vec![
+            Color::Red,
+            Color::Yellow,
+            Color::Green,
+            Color::Blue,
+            Color::Magenta,
+            Color::Cyan,
+            Color::White,
+            Color::DarkGrey,
+            Color::Black,
+        ];
+        let mut idx = color_idx;
+        if color_idx >= palette.len() {
+            idx = palette.len() - 1;
+        }
+        let sc = SetColors(Colors::new(Color::Red, palette[idx]));
+        out.queue(sc);
+        out.queue(Print(self.stride(length)));
+    }
+
+    pub fn renderx(&self, out: &mut Stdout, game: &TetrisGame) {
         // move to the start of the first line that needs to
         // be drawn
-        let mut cmds = Vec::<Box<dyn Command>>::new();
-        cmds.append(cursor::MoveToRow(self.offset_y));
-        cmds.append(cursor::MoveToColumn(1 + self.offset_x));
+        let zoom = self.zoom as usize;
+        /*
+        out.queue(cursor::MoveToRow(self.offset_y));
+        out.queue(cursor::MoveToColumn(1 + self.offset_x));
+        */
 
         // draw board lines
         for by in 0..game.board.height {
-            let start_line_cmd_idx = cmds.length();
+            // draw board left column
+            for zy in 0..self.zoom {
+                out.queue(cursor::MoveToRow(self.offset_y + by * self.zoom + zy));
+                out.queue(cursor::MoveToColumn(1 + self.offset_x));
+                self.colorline(out, zoom, 7);
 
-            // draw board
-            cmds.append(SetColors(Colors::new(Color::Red, Color::DarkGrey)));
-            cmds.append(" ");
+                let line_start = (by * game.board.width) as usize;
+                let mut prev = game.board.debris[line_start];
+                let mut cur = prev;
 
-            let mut cur: usize;
-            let line_start = by * game.board.width;
-            let mut prev = game.board.debris[line_start];
-            let stride_count = 0;
-            for bx in 0..game.board.width {
-                if self.cur_piece_hit(game, bx, by) {
-                    // TODO
-                    cur = 0;
-                } else {
-                    cur = game.board.debris[line_start + bx];
+                let mut stride_count = 0usize;
+                let mut sl = 0usize;
+                let mut sc = 0usize;
+                let mut bx = 0;
+                while bx < game.board.width {
+                    (sl, sc) = self.cur_piece_stride(&game, bx, by);
+                    if sl > 0 {
+                        bx += sl as u16;
+                        if sc == prev {
+                            stride_count += sl;
+                        } else {
+                            self.colorline(out, stride_count, prev);
+                            stride_count = sl;
+                            prev = sc;
+                        }
+                    }
+
+                    cur = game.board.debris[line_start + bx as usize];
+                    if cur == prev {
+                        stride_count += 1;
+                    } else {
+                        self.colorline(out, zoom * stride_count, prev);
+                        stride_count = 1;
+                        prev = cur;
+                    }
+                    bx += 1;
                 }
+                self.colorline(out, zoom * stride_count, prev);
+                // draw board right column
+                self.colorline(out, zoom, 7);
 
-                if cur == prev {
-                    stride_count += 1;
-                } else {
-                    self.add_stride(game, cmds, prev, self.zoom * stride_count);
-                    stride_count = 1;
-                    prev = cur;
-                }
-            }
-            self.add_stride(game, cmds, prev, self.zoom * stride_count);
+                // TODO: draw the caracters until the end of the screen to
+                // avoid a move scape code
+                // sl, sc = self.preview_box_stride(game, bx, by) {
 
-            cmds.append(SetColors(Colors::new(Color::Red, Color::DarkGrey)));
-            cmds.append(" ");
-            // draw preview box
-            self.draw_preview_box(game, cmds, by);
-            let end_line_cmd_idx = cmds.length();
-            for zy in 1..self.zoom {
-                for idx in start_line_cmd_idx..end_line_cmd_idx {
-                    cmds.append();
-                }
+                // draw preview box
             }
         }
 
         // TODO: draw bottom line
         //
-
-        cmds
-    }
-
-    fn add_stride(
-        &self,
-        game: &TetrisGame,
-        cmds: &mut Vec<Box<dyn Command>>,
-        piece: usize,
-        len: u16,
-    ) {
-        let s = String::with_capacity(len);
-        for n in 0..len {
-            s.push(' ');
+        for i in 0..self.zoom {
+            out.queue(cursor::MoveToRow(
+                self.offset_y + i + self.zoom * game.board.height,
+            ));
+            out.queue(cursor::MoveToColumn(1 + self.offset_x));
+            self.colorline(out, zoom * ((game.board.width + 2) as usize), 7);
         }
-        cmds.append(SetColors());
-        cmds.append(s);
     }
 
-    fn cur_piece_hit(&self, game: &TetrisGame, x: u16, y: u16) -> bool {
-        false
+    // returns the lenght and color of a stride, it returns 0, if at the current
+    // point there is nothing to draw.
+    fn cur_piece_stride(&self, game: &TetrisGame, x: u16, y: u16) -> (usize, usize) {
+        (0, 0)
     }
 
-    fn draw_preview_box(&self, game: &TetrisGame, cmds: &mut Vec<Box<dyn Command>>, by: u16) {}
+    fn preview_box_stride(&self, game: &TetrisGame, x: u16, y: u16) -> (usize, usize) {
+        (0, 0)
+    }
 }
 
 pub struct StdTetrisRender {
     screen: Screen,
+}
+
+struct ColorLine {
+    color: SetColors,
+    length: usize,
 }
 
 impl StdTetrisRender {
@@ -169,13 +211,14 @@ impl StdTetrisRender {
 
     fn draw_frame(&mut self, game: &TetrisGame) {
         let mut out = stdout();
-        // out.queue(Clear(ClearType::All)).unwrap();
-
+        /*
+        out.queue(Clear(ClearType::All)).unwrap();
         self.draw_board(&mut out, game);
-
         self.draw_piece(&mut out, &game.active_piece, &game.piece_set);
-        // self.draw_next_piece(&mut out, &game.next_piece, &game.piece_set);
+        self.draw_next_piece(&mut out, &game.next_piece, &game.piece_set);
+        */
 
+        self.screen.renderx(&mut out, &game);
         out.flush();
     }
 
