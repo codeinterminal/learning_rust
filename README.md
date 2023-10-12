@@ -1,2 +1,3 @@
-# learning_rust
-Random projects to learn rust
+# Learning Rust
+
+Random small programs to learn different rust concepts.
